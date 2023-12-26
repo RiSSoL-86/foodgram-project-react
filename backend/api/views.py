@@ -76,7 +76,7 @@ class TagsViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
-    http_method_names = ['get',]
+    http_method_names = ['get', ]
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
@@ -87,7 +87,7 @@ class IngredientsViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     filter_backends = (IngredientsFilter,)
     search_fields = ('^name',)
-    http_method_names = ['get',]
+    http_method_names = ['get', ]
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
