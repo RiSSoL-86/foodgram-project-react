@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
 from foodgram.settings import EMAIL_MAX_LENGTH, NAME_MAX_LENGTH, REGEX_SIGNS
 
 

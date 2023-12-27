@@ -1,5 +1,4 @@
 from django.db import models
-
 from foodgram.settings import (REGEX_AMOUNT, REGEX_COLOR, REGEX_SLUG,
                                TEXT_MAX_LENGTH)
 from users.models import User

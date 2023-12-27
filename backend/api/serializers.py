@@ -1,9 +1,8 @@
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
-
 from foodgram.settings import DEFAULT_PAGES_LIMIT
 from recipes.models import (FavoriteRecipes, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
+from rest_framework import serializers
 from users.models import Subscribers, User
 
 
