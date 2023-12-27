@@ -24,7 +24,7 @@ class CustomUserViewSet(UserViewSet):
 
     @action(methods=['GET'],
             detail=False,
-            permission_classes=(IsAuthenticated,))
+            permission_classes=[IsAuthenticated,])
     def me(self, request):
         """Получить доступ к своей странице по адресу /users/me/
            может только авторизированный пользователь."""
@@ -33,16 +33,11 @@ class CustomUserViewSet(UserViewSet):
 
     @action(methods=['GET'],
             detail=False,
-            permission_classes=(IsAuthenticated,))
+            permission_classes=[IsAuthenticated,])
     def subscriptions(self, request):
         """Возвращает список авторов рецептов, на которых подписан текущий
            пользователь. В выдачу добавляются рецепты авторов и их кол-во."""
-        limit = self.request.query_params.get('limit')
-        if limit:
-            subscriptions = Subscribers.objects.filter(
-                user=request.user)[:int(limit)]
-        else:
-            subscriptions = Subscribers.objects.filter(user=request.user)
+        subscriptions = Subscribers.objects.filter(user=request.user)
         pages = self.paginate_queryset(subscriptions)
         serializer = SubscriptionsListSerializer(pages,
                                                  many=True,
@@ -51,7 +46,7 @@ class CustomUserViewSet(UserViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=False,
-            permission_classes=(IsAuthenticated,),
+            permission_classes=[IsAuthenticated,],
             url_path=r'(?P<id>\d+)/subscribe')
     def subscribe(self, request, id):
         """Подписаться или отписаться от пользователя."""
@@ -112,7 +107,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET'],
             detail=False,
-            permission_classes=(IsAuthenticated,))
+            permission_classes=[IsAuthenticated,])
     def download_shopping_cart(self, request):
         """Скачать файл со списком покупок. Формат файла: file.txt"""
         shoppingcart = ShoppingCart.objects.filter(user=request.user)
@@ -141,7 +136,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=False,
-            permission_classes=(IsAuthenticated,),
+            permission_classes=[IsAuthenticated,],
             url_path=r'(?P<id>\d+)/shopping_cart')
     def shopping_cart(self, request, id):
         """Добавление или удаление рецепта в список покупок."""
@@ -180,7 +175,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST', 'DELETE'],
             detail=False,
-            permission_classes=(IsAuthenticated,),
+            permission_classes=[IsAuthenticated,],
             url_path=r'(?P<id>\d+)/favorite')
     def favorite(self, request, id):
         """Добавление или удаление рецепта в избранное."""
