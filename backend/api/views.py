@@ -20,6 +20,13 @@ from .serializers import (AddRecipeSerializer, FavoriteRecipesSerializer,
 class CustomUserViewSet(UserViewSet):
     """Вьюсет для модели Пользователя."""
 
+    def get_queryset(self):
+        """Лимитирование кол-ва отображаемых пользователей в ответе."""
+        limit = self.request.query_params.get('limit')
+        if limit:
+            return User.objects.all()[:int(limit)]
+        return User.objects.all()
+
     @action(methods=['GET'],
             detail=False,
             permission_classes=(IsAuthenticated,))
@@ -35,7 +42,12 @@ class CustomUserViewSet(UserViewSet):
     def subscriptions(self, request):
         """Возвращает список авторов рецептов, на которых подписан текущий
            пользователь. В выдачу добавляются рецепты авторов и их кол-во."""
-        subscriptions = Subscribers.objects.filter(user=request.user)
+        limit = self.request.query_params.get('limit')
+        if limit:
+            subscriptions = Subscribers.objects.filter(
+                user=request.user)[:int(limit)]
+        else:
+            subscriptions = Subscribers.objects.filter(user=request.user)
         pages = self.paginate_queryset(subscriptions)
         serializer = SubscriptionsListSerializer(pages,
                                                  many=True,
@@ -97,6 +109,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorAdminOrReadOnly,)
     filterset_class = RecipesFilter
 
+    def get_queryset(self):
+        """Лимитирование кол-ва отображаемых рецептов в ответе."""
+        limit = self.request.query_params.get('limit')
+        if limit:
+            return Recipe.objects.all()[:int(limit)]
+        return Recipe.objects.all()
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return GetRecipeSerializer
@@ -137,11 +156,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
             url_path=r'(?P<id>\d+)/shopping_cart')
     def shopping_cart(self, request, id):
         """Добавление или удаление рецепта в список покупок."""
-        recipe = get_object_or_404(Recipe, id=id)
-        shoppingcart_status = ShoppingCart.objects.filter(
-            user=request.user,
-            recipe=recipe).exists()
         if request.method == 'POST':
+            if not Recipe.objects.filter(id=id).exists():
+                return Response({'errors': 'Рецепт не найден!'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            recipe = get_object_or_404(Recipe, id=id)
+            shoppingcart_status = ShoppingCart.objects.filter(
+                user=request.user,
+                recipe=recipe).exists()
             if shoppingcart_status:
                 return Response({'errors': 'Рецепт уже добавлен!'},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -153,13 +175,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, id=id)
+            shoppingcart_status = ShoppingCart.objects.filter(
+                user=request.user,
+                recipe=recipe).exists()
             if shoppingcart_status:
                 ShoppingCart.objects.get(user=request.user,
                                          recipe=recipe).delete()
                 return Response('Рецепт удалён из списка покупок!',
                                 status=status.HTTP_204_NO_CONTENT)
             return Response({'errors': 'Рецепт не найден в списке покупок.'},
-                            status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['POST', 'DELETE'],
             detail=False,
@@ -167,12 +193,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
             url_path=r'(?P<id>\d+)/favorite')
     def favorite(self, request, id):
         """Добавление или удаление рецепта в избранное."""
-        recipe = get_object_or_404(Recipe, id=id)
-        favoriterecipes = FavoriteRecipes.objects.filter(
-            user=request.user,
-            recipe=recipe).exists()
         if request.method == 'POST':
-            if favoriterecipes:
+            if not Recipe.objects.filter(id=id).exists():
+                return Response({'errors': 'Рецепт не найден!'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            recipe = get_object_or_404(Recipe, id=id)
+            shoppingcart_status = FavoriteRecipes.objects.filter(
+                user=request.user,
+                recipe=recipe).exists()
+            if shoppingcart_status:
                 return Response({'errors': 'Рецепт уже добавлен!'},
                                 status=status.HTTP_400_BAD_REQUEST)
             serializer = FavoriteRecipesSerializer(data=request.data)
@@ -183,10 +212,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
-            if favoriterecipes:
+            recipe = get_object_or_404(Recipe, id=id)
+            shoppingcart_status = FavoriteRecipes.objects.filter(
+                user=request.user,
+                recipe=recipe).exists()
+            if shoppingcart_status:
                 FavoriteRecipes.objects.get(user=request.user,
                                             recipe=recipe).delete()
-                return Response('Рецепт удалён из списка избранных!',
+                return Response('Рецепт удалён из избранного!',
                                 status=status.HTTP_204_NO_CONTENT)
-            return Response({'errors': 'Рецепт не найден в списке избранных.'},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({'errors': 'Рецепт не найден в избранном.'},
+                            status=status.HTTP_400_BAD_REQUEST)

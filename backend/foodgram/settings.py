@@ -16,7 +16,7 @@ REGEX_SIGNS = RegexValidator(r'^[\w.@+-]+\Z', 'Поддерживаемые зн
 REGEX_COLOR = RegexValidator(r'^#[0-9A-F]{6}$', 'Поддерживаемые знаки.')
 # Validators for field 'slug' in Tag!
 REGEX_SLUG = RegexValidator(r'^[-a-zA-Z0-9_]+$', 'Поддерживаемые знаки.')
-# Validators for field 'slug' in Tag!
+# Validators for field 'amount' in RecipeIngredient!
 REGEX_AMOUNT = RegexValidator(r'^[1-9][0-9]*$', 'Поддерживаемые значения.')
 # Constants for models!
 NAME_MAX_LENGTH = 150

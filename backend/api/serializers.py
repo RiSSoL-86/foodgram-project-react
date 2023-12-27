@@ -261,9 +261,15 @@ class AddRecipeSerializer(serializers.ModelSerializer):
     def to_representation(self, recipe):
         """Корректировка отображения информации о созданном рецепте."""
         data = super().to_representation(recipe)
-        data['tags'] = TagSerializer(recipe.tags.all(), many=True).data
-        data['ingredients'] = [GetRecipeIngredientSerializer(i).data
-                               for i in recipe.recipeingredients.values()]
+        data['tags'] = recipe.tags.values()
+        data['ingredients'] = [{
+            'id': Ingredient.objects.get(id=i.get('ingredients_id')).id,
+            'name': Ingredient.objects.get(
+                id=i.get('ingredients_id')).name,
+            'measurement_unit': Ingredient.objects.get(
+                id=i.get('ingredients_id')).measurement_unit,
+            'amount': i.get('amount')}
+            for i in recipe.recipeingredients.values()]
         author = User.objects.get(id=recipe.author.id)
         user = self.context.get('request').user
         data['author'] = {
@@ -302,13 +308,13 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(
         source='recipe.image',
         read_only=True)
-    coocking_time = serializers.IntegerField(
+    cooking_time = serializers.IntegerField(
         source='recipe.cooking_time',
         read_only=True)
 
     class Meta:
         model = ShoppingCart
-        fields = ('id', 'name', 'image', 'coocking_time')
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class FavoriteRecipesSerializer(serializers.ModelSerializer):
@@ -319,10 +325,10 @@ class FavoriteRecipesSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(
         source='recipe.image',
         read_only=True)
-    coocking_time = serializers.IntegerField(
+    cooking_time = serializers.IntegerField(
         source='recipe.cooking_time',
         read_only=True)
 
     class Meta:
         model = FavoriteRecipes
-        fields = ('id', 'name', 'image', 'coocking_time')
+        fields = ('id', 'name', 'image', 'cooking_time')

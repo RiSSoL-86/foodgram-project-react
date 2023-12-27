@@ -13,7 +13,7 @@ services:
       - pg_data:/var/lib/postgresql/data
   
   backend:
-    image: rissol86/foodgram_backend
+    build: ./backend/
     env_file: .env
     volumes:
       - static:/static
@@ -22,14 +22,14 @@ services:
       - db
   
   frontend:
-    image: rissol86/foodgram_frontend
+    build: ./frontend/
     env_file: .env
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
   
   gateway:
-    image: rissol86/foodgram_gateway
+    build: ./nginx/
     env_file: .env
     volumes:
       - static:/static
