@@ -22,6 +22,8 @@ REGEX_AMOUNT = RegexValidator(r'^[1-9][0-9]*$', 'Поддерживаемые з
 NAME_MAX_LENGTH = 150
 EMAIL_MAX_LENGTH = 254
 TEXT_MAX_LENGTH = 200
+# Default pagination size!
+DEFAULT_PAGES_LIMIT = 6
 
 # Application definition
 INSTALLED_APPS = [

@@ -1,10 +1,10 @@
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
+from foodgram.settings import DEFAULT_PAGES_LIMIT
 from recipes.models import (FavoriteRecipes, Ingredient, Recipe,
                             RecipeIngredient, ShoppingCart, Tag)
-from rest_framework import serializers
 from users.models import Subscribers, User
-
-DEFAULT_RECIPES_LIMIT = 6
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -74,7 +74,7 @@ class SubscriptionsListSerializer(serializers.ModelSerializer):
     def get_recipes(self, obj):
         """Список рецептов автора."""
         request = self.context.get('request')
-        limit = request.GET.get('recipes_limit', DEFAULT_RECIPES_LIMIT)
+        limit = request.GET.get('recipes_limit', DEFAULT_PAGES_LIMIT)
         return HelperRecipeSerializer(
             Recipe.objects.filter(author=obj.author)[:int(limit)],
             many=True

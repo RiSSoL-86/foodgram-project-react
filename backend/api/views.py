@@ -1,15 +1,17 @@
 from django.http import FileResponse
 from djoser.views import UserViewSet
-from recipes.models import (FavoriteRecipes, Ingredient, Recipe,
-                            RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+from recipes.models import (FavoriteRecipes, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 from users.models import Subscribers, User
 
 from .filters import IngredientsFilter, RecipesFilter
+from .paginations import Pagination
 from .permissions import IsAuthorAdminOrReadOnly
 from .serializers import (AddRecipeSerializer, FavoriteRecipesSerializer,
                           GetRecipeSerializer, IngredientSerializer,
@@ -19,13 +21,7 @@ from .serializers import (AddRecipeSerializer, FavoriteRecipesSerializer,
 
 class CustomUserViewSet(UserViewSet):
     """Вьюсет для модели Пользователя."""
-
-    def get_queryset(self):
-        """Лимитирование кол-ва отображаемых пользователей в ответе."""
-        limit = self.request.query_params.get('limit')
-        if limit:
-            return User.objects.all()[:int(limit)]
-        return User.objects.all()
+    pagination_class = Pagination
 
     @action(methods=['GET'],
             detail=False,
@@ -106,15 +102,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Рецептов."""
     queryset = Recipe.objects.all()
     serializer_class = GetRecipeSerializer
+    pagination_class = Pagination
     permission_classes = (IsAuthorAdminOrReadOnly,)
     filterset_class = RecipesFilter
-
-    def get_queryset(self):
-        """Лимитирование кол-ва отображаемых рецептов в ответе."""
-        limit = self.request.query_params.get('limit')
-        if limit:
-            return Recipe.objects.all()[:int(limit)]
-        return Recipe.objects.all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -157,7 +147,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, id):
         """Добавление или удаление рецепта в список покупок."""
         if request.method == 'POST':
-            if not Recipe.objects.filter(id=id).exists():
+            if not Recipe.objects.filter(id=id):
                 return Response({'errors': 'Рецепт не найден!'},
                                 status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=id)
@@ -176,14 +166,16 @@ class RecipesViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
             recipe = get_object_or_404(Recipe, id=id)
+            if not Recipe.objects.filter(id=id):
+                return Response({'errors': 'Рецепт не найден!'},
+                                status=status.HTTP_400_BAD_REQUEST)
             shoppingcart_status = ShoppingCart.objects.filter(
                 user=request.user,
                 recipe=recipe).exists()
             if shoppingcart_status:
                 ShoppingCart.objects.get(user=request.user,
                                          recipe=recipe).delete()
-                return Response('Рецепт удалён из списка покупок!',
-                                status=status.HTTP_204_NO_CONTENT)
+                return Response(status=status.HTTP_204_NO_CONTENT)
             return Response({'errors': 'Рецепт не найден в списке покупок.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -194,7 +186,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, id):
         """Добавление или удаление рецепта в избранное."""
         if request.method == 'POST':
-            if not Recipe.objects.filter(id=id).exists():
+            if not Recipe.objects.filter(id=id):
                 return Response({'errors': 'Рецепт не найден!'},
                                 status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=id)
@@ -213,13 +205,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
             recipe = get_object_or_404(Recipe, id=id)
+            if not Recipe.objects.filter(id=id):
+                return Response({'errors': 'Рецепт не найден!'},
+                                status=status.HTTP_400_BAD_REQUEST)
             shoppingcart_status = FavoriteRecipes.objects.filter(
                 user=request.user,
                 recipe=recipe).exists()
             if shoppingcart_status:
                 FavoriteRecipes.objects.get(user=request.user,
                                             recipe=recipe).delete()
-                return Response('Рецепт удалён из избранного!',
-                                status=status.HTTP_204_NO_CONTENT)
-            return Response({'errors': 'Рецепт не найден в избранном.'},
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({'errors': 'Рецепт не найден в списке покупок.'},
                             status=status.HTTP_400_BAD_REQUEST)
