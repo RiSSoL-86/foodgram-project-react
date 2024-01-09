@@ -2,28 +2,12 @@ import os
 from pathlib import Path
 
 from django.core.management.utils import get_random_secret_key
-from django.core.validators import RegexValidator
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 DEBUG = os.getenv('DEBUG') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-# Validators for field 'username' in Usermodel!
-REGEX_SIGNS = RegexValidator(r'^[\w.@+-]+\Z', 'Поддерживаемые знаки.')
-# Validators for field 'color' in Tag!
-REGEX_COLOR = RegexValidator(r'^#[0-9A-F]{6}$', 'Поддерживаемые знаки.')
-# Validators for field 'slug' in Tag!
-REGEX_SLUG = RegexValidator(r'^[-a-zA-Z0-9_]+$', 'Поддерживаемые знаки.')
-# Validators for field 'amount' in RecipeIngredient!
-REGEX_AMOUNT = RegexValidator(r'^[1-9][0-9]*$', 'Поддерживаемые значения.')
-# Constants for models!
-NAME_MAX_LENGTH = 150
-EMAIL_MAX_LENGTH = 254
-TEXT_MAX_LENGTH = 200
-# Default pagination size!
-DEFAULT_PAGES_LIMIT = 6
 
 # Application definition
 INSTALLED_APPS = [
