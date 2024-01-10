@@ -2,15 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
-from foodgram.constants import NAME_MAX_LENGTH, REGEX_SIGNS
+from foodgram.constants import NAME_MAX_LENGTH
 
 
 class User(AbstractUser):
     """Модель пользователя."""
-    ROLE_USER = [
-        ('user', 'Пользователь'),
-        ('admin', 'Администратор')
-    ]
     REQUIRED_FIELDS = [
         'username',
         'first_name',
@@ -21,7 +17,7 @@ class User(AbstractUser):
     username = models.CharField(
         unique=True,
         max_length=NAME_MAX_LENGTH,
-        validators=[UnicodeUsernameValidator, REGEX_SIGNS],
+        validators=[UnicodeUsernameValidator(), ],
         verbose_name='Никнейм пользователя',
         help_text='Укажите никнейм пользователя'
     )
@@ -40,16 +36,6 @@ class User(AbstractUser):
         verbose_name='E-mail пользователя',
         help_text='Укажите e-mail пользователя'
     )
-    role = models.CharField(
-        max_length=15,
-        choices=ROLE_USER,
-        default='user',
-        verbose_name='Пользовательская роль'
-    )
-
-    @property
-    def admin(self):
-        return self.role == self.ADMIN
 
     class Meta:
         ordering = ('username',)

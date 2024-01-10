@@ -1,7 +1,7 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-from foodgram.constants import NAME_MAX_LENGTH, REGEX_COLOR, TEXT_MAX_LENGTH
+from foodgram.constants import REGEX_COLOR, TEXT_MAX_LENGTH
 from users.models import User
 
 
@@ -24,7 +24,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         null=True,
         unique=True,
-        max_length=NAME_MAX_LENGTH,
+        max_length=TEXT_MAX_LENGTH,
         verbose_name='Аббревиатура тега',
         help_text='Укажите аббревиатуру тега'
     )
@@ -111,7 +111,9 @@ class Recipe(models.Model):
         help_text='Укажите описание рецепта'
     )
     cooking_time = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1, 'Минимальное время приготовления')],
+        validators=[
+            MinValueValidator(1, 'Минимальное время приготовления'),
+            MaxValueValidator(32000, 'Максимальное время приготовления')],
         verbose_name='Время приготовления',
         help_text='Укажите время приготовления, от 1 мин'
     )
@@ -172,7 +174,9 @@ class RecipeIngredient(models.Model):
         help_text='Укажите ингредиент рецепта'
     )
     amount = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1, 'Минимальное кол-во ингредиента')],
+        validators=[
+            MinValueValidator(1, 'Минимальное кол-во ингредиента'),
+            MaxValueValidator(32000, 'Максимальное кол-во ингредиента')],
         verbose_name='Кол-во ингредиента',
         help_text='Укажите кол-во ингредиента, от 1 и более'
     )

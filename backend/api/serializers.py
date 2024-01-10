@@ -1,4 +1,3 @@
-import requests
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -12,14 +11,6 @@ class UsersSerializer(serializers.ModelSerializer):
     """Сериализатор для пользователя."""
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
-    def get_is_subscribed(self, obj):
-        """Подписан ли текущий пользователь на автора рецепта."""
-        user = self.context.get('request')
-        return bool(user and user.user.is_authenticated
-                    and Subscribers.objects.filter(
-                        author=obj,
-                        user=user.user).exists())
-
     class Meta:
         model = User
         fields = (
@@ -30,6 +21,14 @@ class UsersSerializer(serializers.ModelSerializer):
             'last_name',
             'is_subscribed',
         )
+
+    def get_is_subscribed(self, obj):
+        """Подписан ли текущий пользователь на автора рецепта."""
+        user = self.context.get('request')
+        return bool(user and user.user.is_authenticated
+                    and Subscribers.objects.filter(
+                        author=obj,
+                        user=user.user).exists())
 
 
 class HelperRecipeSerializer(serializers.ModelSerializer):
@@ -77,13 +76,13 @@ class SubscriptionsListSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit', DEFAULT_PAGES_LIMIT)
         try:
-            return HelperRecipeSerializer(
-                Recipe.objects.filter(author=obj.author)[:int(limit)],
-                many=True
-            ).data
-        except requests.RequestException:
-            raise TypeError('Передаваемый параметр limit имеет неверный '
-                            'формат данных!')
+            limit = int(limit)
+        except ValueError:
+            pass
+        return HelperRecipeSerializer(
+            Recipe.objects.filter(author=obj.author)[:limit],
+            many=True
+        ).data
 
     def get_recipes_count(self, obj):
         """Кол-во рецептов автора."""
@@ -92,6 +91,10 @@ class SubscriptionsListSerializer(serializers.ModelSerializer):
 
 class SubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор для модели подписок."""
+
+    class Meta:
+        model = Subscribers
+        fields = '__all__'
 
     def validate(self, data):
         """Валидация на подписку."""
@@ -106,10 +109,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, author):
         return SubscriptionsListSerializer(author, context=self.context).data
-
-    class Meta:
-        model = Subscribers
-        fields = '__all__'
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -154,6 +153,21 @@ class GetRecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField()
 
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'tags',
+            'author',
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time'
+        )
+
     def get_is_favorited(self, obj):
         """Являяется ли рецепт избранным для текущего пользователя."""
         user = self.context.get('request')
@@ -169,21 +183,6 @@ class GetRecipeSerializer(serializers.ModelSerializer):
                     and ShoppingCart.objects.filter(
                         recipe=obj,
                         user=user.user).exists())
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'ingredients',
-            'is_favorited',
-            'is_in_shopping_cart',
-            'name',
-            'image',
-            'text',
-            'cooking_time'
-        )
 
 
 class AddRecipeIngredientSerializer(serializers.ModelSerializer):
@@ -205,6 +204,21 @@ class AddRecipeSerializer(serializers.ModelSerializer):
     ingredients = AddRecipeIngredientSerializer(many=True, write_only=True)
     author = serializers.HiddenField(default=serializers.CurrentUserDefault())
     image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            'id',
+            'tags',
+            'author',
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time'
+        )
 
     def add_tags(self, tags, recipe):
         """Сохранение в БД тэгов рецепта."""
@@ -263,22 +277,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, recipe):
         """Корректировка отображения информации о созданном рецепте."""
-        return GetRecipeSerializer().to_representation(recipe)
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'tags',
-            'author',
-            'ingredients',
-            'is_favorited',
-            'is_in_shopping_cart',
-            'name',
-            'image',
-            'text',
-            'cooking_time'
-        )
+        return GetRecipeSerializer(recipe).data
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
